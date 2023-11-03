@@ -64,9 +64,20 @@ from stable_baselines3.common.vec_env import VecFrameStack
 
 from stable_baselines3.common.evaluation import evaluate_policy
 
+
+import gymnasium as gym
+from stable_baselines3.common.vec_env import VecVideoRecorder, DummyVecEnv
+from stable_baselines3 import DQN
+
 # Create log dir
 log_dir = "/tmp/gym/1102DQN_v2_test_seed/"
 os.makedirs(log_dir, exist_ok=True)
+
+
+
+env_id = "PongNoFrameskip-v4"
+video_folder = "logs/videos/"
+video_length = 1000
 
 
 # There already exists an environment generator
@@ -84,53 +95,24 @@ vec_env = VecFrameStack(vec_env, n_stack=4)
 
 load_model = DQN.load("/home/neaf2080/code/yen/RL/rl-baselines3-zoo/logs/dqn/PongNoFrameskip-v4_1/PongNoFrameskip-v4.zip")
 
-mean_reward, std_reward = evaluate_policy(load_model, vec_env, n_eval_episodes=10, warn=False)
+# mean_reward, std_reward = evaluate_policy(load_model, vec_env, n_eval_episodes=10, warn=False)
 
-print(f"mean_reward: {mean_reward:.2f} +/- {std_reward:.2f}")
+# print(f"mean_reward: {mean_reward:.2f} +/- {std_reward:.2f}")
 
 
-# print(load_model.gamma)
-# model = DQN(policy = "CnnPolicy", 
-#             env = vec_env, 
-#             verbose = 1,
-#             buffer_size = 100000, 
-#             learning_rate = float(1e-4), 
-#             batch_size = 32, 
-#             learning_starts = 100000,
-#             target_update_interval = 1000,
-#             train_freq = 4,
-#             gradient_steps = 1,
-#             exploration_fraction = 0.1,
-#             exploration_final_eps = 0.01,
-#             optimize_memory_usage = False,
-#             seed = 525
-#            )
+obs = vec_env.reset()
 
-# print(model.learning_rate)
 
-# model.learn(total_timesteps = 10_000_000, 
-#             callback = callback)
+# Record the video starting at the first step
+vec_env = VecVideoRecorder(vec_env, video_folder,
+                       record_video_trigger=lambda x: x == 0, video_length=video_length,
+                       name_prefix=f"DQN-agent-{env_id}")
 
-# model = DQN(policy = "CnnPolicy", 
-#             env = vec_env, 
-#             verbose = 1,
-#             buffer_size = 100000, 
-#             learning_rate = float(1e-4), 
-#             batch_size = 32, 
-#             learning_starts = 100000,
-#             target_update_interval = 1000,
-#             train_freq = 4,
-#             gradient_steps = 1,
-#             exploration_fraction = 0.1,
-#             exploration_final_eps = 0.01,
-#             optimize_memory_usage = False,
-#             seed = 525
-#            )
-
-# model.learn(total_timesteps = 10_000_000, 
-#             callback = callback)
-# obs = vec_env.reset()
-# while True:
-#     action, _states = model.predict(obs, deterministic=False)
-#     obs, rewards, dones, info = vec_env.step(action)
-#     vec_env.render("human")
+vec_env.reset()
+for _ in range(video_length + 1):
+    # action, _states = load_model.predict(obs, deterministic=True)
+    action = [vec_env.action_space.sample()]
+    obs, _, _, _ = vec_env.step(action)
+  
+# Save the video
+vec_env.close()
