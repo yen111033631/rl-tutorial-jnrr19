@@ -1,4 +1,11 @@
 import os
+import gymnasium as gym
+import pybullet_envs
+# import gym
+
+from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
+from stable_baselines3 import PPO
+import os
 
 import numpy as np
 
@@ -64,18 +71,26 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
         return True
 
 
+env_id = "Reacher-v4"
+
 # Create log dir
-log_dir = "/tmp/gym/1102DQN_v2_test_seed/"
+log_dir = f"/tmp/gym/mujoco/{env_id}"
 os.makedirs(log_dir, exist_ok=True)
 
 
-# There already exists an environment generator
-# that will make and wrap atari environments correctly.
-# Here we are also multi-worker training (n_envs=4 => 4 environments)
-vec_env = make_atari_env("PongNoFrameskip-v4", n_envs=1, seed=525, monitor_dir=log_dir)
-# Frame-stacking with 4 frames
-vec_env = VecFrameStack(vec_env, n_stack=4)
+# Note: pybullet is not compatible yet with Gymnasium
+# you might need to use `import rl_zoo3.gym_patches`
+# and use gym (not Gymnasium) to instantiate the env
+# Alternatively, you can use the MuJoCo equivalent "HalfCheetah-v4"
+# vec_env = DummyVecEnv([lambda: gym.make("HalfCheetahBulletEnv-v0")])
 
+vec_env = gym.make(env_id)
+vec_env = Monitor(vec_env, log_dir)
+vec_env = DummyVecEnv([lambda: vec_env])
+# vec_env = DummyVecEnv([lambda: gym.make("HalfCheetah-v4")])
+# Automatically normalize the input features and reward
+vec_env = VecNormalize(vec_env, norm_obs=True, norm_reward=True,
+                   clip_obs=10.)
 
 
 
@@ -83,27 +98,42 @@ vec_env = VecFrameStack(vec_env, n_stack=4)
 callback = SaveOnBestTrainingRewardCallback(check_freq=20, log_dir=log_dir, verbose=0)
 
 
-model = DQN(policy = "CnnPolicy", 
+model = PPO(policy = "MlpPolicy", 
             env = vec_env, 
             verbose = 1,
-            buffer_size = 100000, 
-            learning_rate = float(1e-4), 
-            batch_size = 32, 
-            learning_starts = 100000,
-            target_update_interval = 1000,
-            train_freq = 4,
-            gradient_steps = 1,
-            exploration_fraction = 0.1,
-            exploration_final_eps = 0.01,
-            optimize_memory_usage = False,
-            seed = 525
+            batch_size = 32,
+            n_steps = 512,
+            gamma = 0.9,
+            learning_rate = 0.000104019,
+            ent_coef = 7.52585e-08,
+            clip_range = 0.3,
+            n_epochs = 5,
+            gae_lambda = 1.0,
+            max_grad_norm = 0.9,
+            vf_coef = 0.950368,
+            seed = 525            
            )
 
-model.learn(total_timesteps = 10_000_000, 
+model.learn(total_timesteps = 1_000_000, 
             callback = callback)
 
-# obs = vec_env.reset()
-# while True:
-#     action, _states = model.predict(obs, deterministic=False)
-#     obs, rewards, dones, info = vec_env.step(action)
-#     vec_env.render("human")
+# Don't forget to save the VecNormalize statistics when saving the agent
+# log_dir = "/tmp/mojoco/"
+model.save(log_dir + env_id)
+stats_path = os.path.join(log_dir, "vec_normalize.pkl")
+vec_env.save(stats_path)
+
+# # To demonstrate loading
+# del model, vec_env
+
+# # Load the saved statistics
+# # vec_env = DummyVecEnv([lambda: gym.make("HalfCheetahBulletEnv-v0")])
+# vec_env = DummyVecEnv([lambda: gym.make("HalfCheetah-v4")])
+# vec_env = VecNormalize.load(stats_path, vec_env)
+# #  do not update them at test time
+# vec_env.training = False
+# # reward normalization is not needed at test time
+# vec_env.norm_reward = False
+
+# # Load the agent
+# model = PPO.load(log_dir + "ppo_halfcheetah", env=vec_env)
