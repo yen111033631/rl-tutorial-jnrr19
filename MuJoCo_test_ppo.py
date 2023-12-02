@@ -26,10 +26,7 @@ if __name__ == "__main__":
     env_id = 'Reacher-v4' 
     num = 1
     
-    which_env = f"{env_id}_{num}"
-    
-    
-    
+    which_env = f"{env_id}_{num}"    
     log_dir = f"./logs/models/PPO/{which_env}"
     
     # vec_env = gym.make(env_id, render_mode = "human")
