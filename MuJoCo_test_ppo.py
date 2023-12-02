@@ -24,7 +24,7 @@ if __name__ == "__main__":
 
 
     env_id = 'Reacher-v4' 
-    num = 1
+    num = 2
     
     which_env = f"{env_id}_{num}"    
     log_dir = f"./logs/models/PPO/{which_env}"
@@ -60,7 +60,7 @@ if __name__ == "__main__":
 
     vec_env = VecVideoRecorder(vec_env, video_folder,
                         record_video_trigger=lambda x: x == 0, video_length=video_length,
-                        name_prefix=f"PPO-agent-{env_id}")
+                        name_prefix=f"PPO-agent-{which_env}")
     
     vec_env.reset()
     # vec_env.render()
