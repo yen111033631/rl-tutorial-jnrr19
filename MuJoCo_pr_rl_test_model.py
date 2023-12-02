@@ -46,7 +46,7 @@ print(f"mean_reward: {mean_reward:.2f} +/- {std_reward:.2f}")
 
 env_id = "Reacher-v4"
 video_folder = "logs/videos/"
-video_length = 1000
+video_length = 2000
 
 obs = vec_env.reset()
 

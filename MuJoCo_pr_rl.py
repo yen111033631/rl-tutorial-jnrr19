@@ -19,6 +19,7 @@ from stable_baselines3.common.callbacks import BaseCallback
     
 from stable_baselines3.common.env_util import make_atari_env
 from stable_baselines3.common.vec_env import VecFrameStack
+import ipdb
 
 class SaveOnBestTrainingRewardCallback(BaseCallback):
     """
@@ -70,70 +71,71 @@ class SaveOnBestTrainingRewardCallback(BaseCallback):
 
         return True
 
+def set_log_dir(model_name="PPO", env_id="Reacher-v4"):
+    model_path = f"./logs/models/{model_name}"
+    os.makedirs(model_path, exist_ok=True)
+    env_listdir = os.listdir(model_path)
 
-env_id = "Reacher-v4"
+    num = 0
+    for env_dir in env_listdir:
+        if env_id in env_dir:
+            now_num = int(env_dir[-1]) 
+            num = now_num if now_num > num else num
 
-# Create log dir
-log_dir = f"/tmp/gym/mujoco/{env_id}"
-os.makedirs(log_dir, exist_ok=True)
-
-
-# Note: pybullet is not compatible yet with Gymnasium
-# you might need to use `import rl_zoo3.gym_patches`
-# and use gym (not Gymnasium) to instantiate the env
-# Alternatively, you can use the MuJoCo equivalent "HalfCheetah-v4"
-# vec_env = DummyVecEnv([lambda: gym.make("HalfCheetahBulletEnv-v0")])
-
-vec_env = gym.make(env_id)
-vec_env = Monitor(vec_env, log_dir)
-vec_env = DummyVecEnv([lambda: vec_env])
-# vec_env = DummyVecEnv([lambda: gym.make("HalfCheetah-v4")])
-# Automatically normalize the input features and reward
-vec_env = VecNormalize(vec_env, norm_obs=True, norm_reward=True,
-                   clip_obs=10.)
+    log_dir = f"{model_path}/{env_id}_{num + 1}"
+    os.makedirs(log_dir, exist_ok=True)
+    return log_dir
 
 
 
-# Create Callback
-callback = SaveOnBestTrainingRewardCallback(check_freq=20, log_dir=log_dir, verbose=0)
+if __name__ == "__main__":
+        
+    # Note: pybullet is not compatible yet with Gymnasium
+    # you might need to use `import rl_zoo3.gym_patches`
+    # and use gym (not Gymnasium) to instantiate the env
+    # Alternatively, you can use the MuJoCo equivalent "HalfCheetah-v4"
+    # vec_env = DummyVecEnv([lambda: gym.make("HalfCheetahBulletEnv-v0")])
 
+    env_id = "Reacher-v4"
+    log_dir = set_log_dir(model_name="PPO",
+                          env_id=env_id)
 
-model = PPO(policy = "MlpPolicy", 
-            env = vec_env, 
-            verbose = 1,
-            batch_size = 32,
-            n_steps = 512,
-            gamma = 0.9,
-            learning_rate = 0.000104019,
-            ent_coef = 7.52585e-08,
-            clip_range = 0.3,
-            n_epochs = 5,
-            gae_lambda = 1.0,
-            max_grad_norm = 0.9,
-            vf_coef = 0.950368,
-            seed = 525            
-           )
+    vec_env = gym.make(env_id)
+    vec_env = Monitor(vec_env, log_dir)
+    vec_env = DummyVecEnv([lambda: vec_env])
+    # vec_env = DummyVecEnv([lambda: gym.make("HalfCheetah-v4")])
+    # Automatically normalize the input features and reward
+    vec_env = VecNormalize(vec_env, norm_obs=True, norm_reward=True,
+                    clip_obs=10.)
+    
+    # Create Callback
+    callback = SaveOnBestTrainingRewardCallback(check_freq=20, log_dir=log_dir, verbose=0)
 
-model.learn(total_timesteps = 1_000_000, 
-            callback = callback)
+    model = PPO(policy = "MlpPolicy", 
+                env = vec_env, 
+                verbose = 1,
+                batch_size = 32,
+                n_steps = 512,
+                gamma = 0.9,
+                # learning_rate = 0.000104019,
+                learning_rate = 0.0001,
+                # ent_coef = 7.52585e-08,
+                ent_coef = 7e-08,
+                clip_range = 0.3,
+                n_epochs = 5,
+                gae_lambda = 1.0,
+                max_grad_norm = 0.9,
+                # vf_coef = 0.950368,
+                vf_coef = 0.95,
+                seed = 525,    
+            )
 
-# Don't forget to save the VecNormalize statistics when saving the agent
-# log_dir = "/tmp/mojoco/"
-model.save(log_dir + env_id)
-stats_path = os.path.join(log_dir, "vec_normalize.pkl")
-vec_env.save(stats_path)
+    # ipdb.set_trace()
+    model.learn(total_timesteps = 500_000, 
+                callback = callback)
 
-# # To demonstrate loading
-# del model, vec_env
-
-# # Load the saved statistics
-# # vec_env = DummyVecEnv([lambda: gym.make("HalfCheetahBulletEnv-v0")])
-# vec_env = DummyVecEnv([lambda: gym.make("HalfCheetah-v4")])
-# vec_env = VecNormalize.load(stats_path, vec_env)
-# #  do not update them at test time
-# vec_env.training = False
-# # reward normalization is not needed at test time
-# vec_env.norm_reward = False
-
-# # Load the agent
-# model = PPO.load(log_dir + "ppo_halfcheetah", env=vec_env)
+    # # Don't forget to save the VecNormalize statistics when saving the agent
+    # # log_dir = "/tmp/mojoco/"
+    # model.save(log_dir + env_id)
+    stats_path = os.path.join(log_dir, "vec_normalize.pkl")
+    vec_env.save(stats_path)
