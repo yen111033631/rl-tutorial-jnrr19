@@ -1,24 +1,11 @@
 import os
 import gymnasium as gym
-import pybullet_envs
-# import gym
-
 from stable_baselines3.common.vec_env import DummyVecEnv, VecNormalize
-from stable_baselines3 import PPO
-import os
-
-import numpy as np
-
-from stable_baselines3 import DQN
 from stable_baselines3.common.monitor import Monitor
-from stable_baselines3.common.vec_env import DummyVecEnv
-from stable_baselines3.common.env_util import make_vec_env
 from stable_baselines3.common.results_plotter import load_results, ts2xy
 from stable_baselines3.common.callbacks import BaseCallback
-
-    
-from stable_baselines3.common.env_util import make_atari_env
-from stable_baselines3.common.vec_env import VecFrameStack
+from stable_baselines3 import PPO
+import numpy as np
 import ipdb
 
 class SaveOnBestTrainingRewardCallback(BaseCallback):
