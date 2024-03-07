@@ -38,23 +38,51 @@ if __name__ == "__main__":
     print(f"mean_reward: {mean_reward:.2f} +/- {std_reward:.2f}")
 
 
-    ### record and save video
-    video_folder = "./logs/videos/"
-    video_length = 1000
+    # ### record and save video
+    # video_folder = "./logs/videos/"
+    # video_length = 1000
 
-    obs = vec_env.reset()
+    # obs = vec_env.reset()
 
-    vec_env = VecVideoRecorder(vec_env, video_folder,
-                        record_video_trigger=lambda x: x == 0, video_length=video_length,
-                        name_prefix=f"PPO-agent-{which_env}")
+    # vec_env = VecVideoRecorder(vec_env, video_folder,
+    #                     record_video_trigger=lambda x: x == 0, video_length=video_length,
+    #                     name_prefix=f"PPO-agent-{which_env}")
     
-    vec_env.reset()
-    # vec_env.render()
-    for _ in range(video_length + 1):
-        action, _states = load_model.predict(obs, deterministic=True)
-        # action = [vec_env.action_space.sample()]
-        obs, _, _, _ = vec_env.step(action)
+    # vec_env.reset()
+    # # vec_env.render()
+    # for _ in range(video_length + 1):
+    #     action, _states = load_model.predict(obs, deterministic=True)
+    #     # action = [vec_env.action_space.sample()]
+    #     obs, _, _, _ = vec_env.step(action)
     
-    # Save the video
-    vec_env.close()
+    # # Save the video
+    # vec_env.close()  
+    
 
+
+    # ### record and save gif
+    # video_folder = "./logs/gifs/"
+    # video_length = 1000
+    # obs = vec_env.reset()
+
+    # images = []
+    # obs = load_model.env.reset()
+    # img = load_model.env.render(mode="rgb_array")
+    # for i in range(350):
+    #     images.append(img)
+    #     action, _ = load_model.predict(obs)
+    #     obs, _, _ ,_ = load_model.env.step(action)
+    #     img = load_model.env.render(mode="rgb_array")
+
+    # imageio.mimsave(f"{video_folder}lander_a2c.gif", [np.array(img) for i, img in enumerate(images) if i%2 == 0], fps=29)
+    
+    
+    # images = []
+    # img = vec_env.render(mode="rgb_array")
+    # for i in range(video_length):
+    #     images.append(img)
+    #     action, _ = load_model.predict(obs)
+    #     obs, _, _ ,_ = vec_env.step(action)
+    #     img = vec_env.render(mode="rgb_array")
+
+    # imageio.mimsave(f"{video_folder}/lander_a2c.gif", [np.array(img) for i, img in enumerate(images) if i%2 == 0], fps=29)

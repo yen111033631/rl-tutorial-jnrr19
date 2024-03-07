@@ -118,7 +118,7 @@ if __name__ == "__main__":
             )
 
     # ipdb.set_trace()
-    model.learn(total_timesteps = 500_000, 
+    model.learn(total_timesteps = 50_000, 
                 callback = callback)
 
     # # Don't forget to save the VecNormalize statistics when saving the agent
